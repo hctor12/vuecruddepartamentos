@@ -1,45 +1,21 @@
 <script setup>
 import ServiceDepartamentos from "@/services/ServiceDepartamentos";
 import { onMounted, ref } from "vue";
-import Swal from "sweetalert2";
+import DeleteDepartamento from "./DeleteDepartamento.vue";
 
 const departamentos = ref([]);
 let status = ref(false);
-
-const deleteDep = (id) => {
-  ServiceDepartamentos.deleteDep(id).then(() => {
-    ServiceDepartamentos.getDepartamentos().then((result) => {
-      (departamentos.value = result), (status.value = true);
-    });
-  });
-};
-
-const mostrarAlert = (id) => {
-  Swal.fire({
-    title: "¿Está seguro?",
-    text: "Esta acción no se puede revertir.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#3085d6",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Sí, eliminarlo!",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      deleteDep(id);
-      Swal.fire({
-        title: "¡Eliminado!",
-        text: "El departamento ha sido eliminado.",
-        icon: "success",
-      });
-    }
-  });
-};
 
 onMounted(() => {
   ServiceDepartamentos.getDepartamentos().then((result) => {
     (departamentos.value = result), (status.value = true);
   });
 });
+
+// manejar evento 'deleted' emitido por el componente hijo
+const onDeleted = (id) => {
+  departamentos.value = departamentos.value.filter((d) => d.numero !== id);
+};
 </script>
 <template>
   <h1>Departamentos</h1>
@@ -60,7 +36,7 @@ onMounted(() => {
       </tr>
     </thead>
     <tbody>
-      <tr v-for="dep in departamentos" :key="dep">
+      <tr v-for="dep in departamentos" :key="dep.numero">
         <td>{{ dep.numero }}</td>
         <td>{{ dep.nombre }}</td>
         <td>{{ dep.localidad }}</td>
@@ -79,9 +55,7 @@ onMounted(() => {
           >
         </td>
         <td>
-          <button @click="mostrarAlert(dep.numero)" class="btn btn-danger">
-            Delete
-          </button>
+          <DeleteDepartamento :id="dep.numero" @deleted="onDeleted" />
         </td>
       </tr>
     </tbody>
